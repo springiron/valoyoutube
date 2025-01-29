@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube メモアプリ</title>
+</head>
+<body>
+    <h1>YouTube メモアプリ</h1>
+
+    <!-- YouTube埋め込みプレイヤー -->
+    <div id="player"></div>
+    <button onclick="saveCurrentTime()">停止時のURLを保存</button>
+    
+    <input type="text" id="memo" placeholder="メモを追加">
+    
+    <h2>保存済みの動画</h2>
+    <ul id="videoList"></ul>
+
+    <script>
+        let player;
+        function onYouTubeIframeAPIReady() {
+            player = new YT.Player('player', {
+                height: '360',
+                width: '640',
+                videoId: '817f47ZUMtc', // 初期動画ID
+            });
+        }
+
+        function saveCurrentTime() {
+            const time = Math.floor(player.getCurrentTime());
+            const videoUrl = `https://www.youtube.com/watch?v=${player.getVideoData().video_id}&t=${time}s`;
+            const memo = document.getElementById("memo").value;
+
+            fetch("/save", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ url: videoUrl, memo: memo })
+            }).then(() => loadVideos());
+        }
+
+        function loadVideos() {
+            fetch("/list")
+                .then(res => res.json())
+                .then(videos => {
+                    const list = document.getElementById("videoList");
+                    list.innerHTML = "";
+                    videos.forEach(video => {
+                        const li = document.createElement("li");
+                        li.innerHTML = `<a href="${video.url}" target="_blank">${video.url}</a> - ${video.memo}`;
+                        list.appendChild(li);
+                    });
+                });
+        }
+
+        // YouTube APIのスクリプト読み込み
+        const tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api";
+        document.head.appendChild(tag);
+
+        window.onload = loadVideos;
+    </script>
+</body>
+</html>
