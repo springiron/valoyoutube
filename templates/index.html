@@ -4,56 +4,124 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>YouTube メモアプリ</title>
+    <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
-    <h1>YouTube メモアプリ</h1>
+    <div class="container">
+        <h1>YouTube メモアプリ</h1>
 
-    <!-- YouTube埋め込みプレイヤー -->
-    <div id="player"></div>
-    <button onclick="saveCurrentTime()">停止時のURLを保存</button>
-    
-    <input type="text" id="memo" placeholder="メモを追加">
-    
-    <h2>保存済みの動画</h2>
-    <ul id="videoList"></ul>
+        <div class="main-content">
+            <!-- 左側: YouTube プレイヤー -->
+            <div class="video-container">
+                <input type="text" id="videoUrlInput" placeholder="YouTubeのURLを入力">
+                <button onclick="loadVideo()">動画を読み込む</button>
+                <div id="player"></div>
+            </div>
+
+            <!-- 右側: メモリスト -->
+            <div class="memo-container">
+                <h2>保存済みの動画</h2>
+                <input type="text" id="memoInput" placeholder="メモを入力">
+                <button onclick="saveCurrentTime()">停止時のURLを保存</button>
+
+                <table id="videoTable">
+                    <thead>
+                        <tr>
+                            <th>秒数</th>
+                            <th>メモ</th>
+                            <th>リンク</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+
+                <button class="export-btn" onclick="exportExcel()">Excelにエクスポート</button>
+            </div>
+        </div>
+    </div>
 
     <script>
         let player;
-        function onYouTubeIframeAPIReady() {
-            player = new YT.Player('player', {
-                height: '360',
-                width: '640',
-                videoId: '817f47ZUMtc', // 初期動画ID
-            });
+        let currentVideoId = "";
+
+        function loadVideo() {
+            const urlInput = document.getElementById("videoUrlInput").value.trim();
+            const videoId = extractVideoId(urlInput);
+
+            if (!videoId) {
+                alert("正しいYouTubeのURLを入力してください");
+                return;
+            }
+
+            currentVideoId = videoId;
+
+            if (player) {
+                player.loadVideoById(videoId);
+            } else {
+                player = new YT.Player('player', {
+                    height: '500',
+                    width: '800',
+                    videoId: videoId,
+                });
+            }
         }
 
         function saveCurrentTime() {
-            const time = Math.floor(player.getCurrentTime());
-            const videoUrl = `https://www.youtube.com/watch?v=${player.getVideoData().video_id}&t=${time}s`;
-            const memo = document.getElementById("memo").value;
+            if (!currentVideoId) {
+                alert("動画を先に読み込んでください");
+                return;
+            }
+
+            const time = player ? Math.floor(player.getCurrentTime()) : 0;
+            const formattedTime = formatTime(time);
+            const videoUrl = `https://www.youtube.com/watch?v=${currentVideoId}&t=${time}s`;
+            const memo = document.getElementById("memoInput").value.trim() || "なし";
 
             fetch("/save", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ url: videoUrl, memo: memo })
-            }).then(() => loadVideos());
+                body: JSON.stringify({ url: videoUrl, memo: memo, time: formattedTime })
+            }).then(() => {
+                document.getElementById("memoInput").value = "";
+                loadVideos();
+            });
         }
 
         function loadVideos() {
             fetch("/list")
                 .then(res => res.json())
                 .then(videos => {
-                    const list = document.getElementById("videoList");
-                    list.innerHTML = "";
+                    const tableBody = document.querySelector("#videoTable tbody");
+                    tableBody.innerHTML = "";
                     videos.forEach(video => {
-                        const li = document.createElement("li");
-                        li.innerHTML = `<a href="${video.url}" target="_blank">${video.url}</a> - ${video.memo}`;
-                        list.appendChild(li);
+                        const row = document.createElement("tr");
+                        row.innerHTML = `
+                            <td>${video.time}</td>
+                            <td>${video.memo}</td>
+                            <td><a href="${video.url}" target="_blank">開く</a></td>
+                        `;
+                        tableBody.appendChild(row);
                     });
                 });
         }
 
-        // YouTube APIのスクリプト読み込み
+        function extractVideoId(url) {
+            const regex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+            const match = url.match(regex);
+            return match ? match[1] : null;
+        }
+
+        function formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = seconds % 60;
+            return `${minutes}分${remainingSeconds}秒`;
+        }
+        
+        function exportExcel() {
+        console.log("Excelエクスポートボタンが押されました");  // デバッグ用ログ
+        window.location.href = "/export_excel";
+        }        
+        
         const tag = document.createElement('script');
         tag.src = "https://www.youtube.com/iframe_api";
         document.head.appendChild(tag);
