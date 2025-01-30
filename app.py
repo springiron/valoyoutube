@@ -74,7 +74,7 @@ def list_videos():
 def export_excel():
     """Excelにエクスポート"""
     conn, _ = get_db()
-    df = pd.read_sql_query("SELECT time, memo, url FROM videos", conn)
+    df = pd.read_sql_query("SELECT memo, url FROM videos", conn)
     conn.close()
 
     # 🔹 `<br>` を `\n` に置換
