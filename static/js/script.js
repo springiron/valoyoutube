@@ -32,22 +32,6 @@ function loadVideo() {
     }
 }
 
-// YouTube動画を別タブで開く
-function openVideoInNewTab() {
-    if (!currentVideoId) {
-        alert("動画を読み込んでください");
-        return;
-    }
-
-    const time = player ? Math.floor(player.getCurrentTime()) : 0;
-    const videoUrl = `https://www.youtube.com/watch?v=${currentVideoId}&t=${time}s`;
-
-    // 🔹 localStorage に停止時間を保存
-    localStorage.setItem("latestVideoTime", JSON.stringify({ videoId: currentVideoId, time: time }));
-
-    window.open(videoUrl, "_blank");  // 新しいタブで開く
-}
-
 // YouTube 動画の状態が変更されたときの処理
 function onPlayerStateChange(event) {
     if (event.data === YT.PlayerState.PAUSED) {
@@ -220,3 +204,4 @@ window.addEventListener("storage", (event) => {
 document.addEventListener("DOMContentLoaded", () => {
     loadVideos();
 });
+

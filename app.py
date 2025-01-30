@@ -1,32 +1,48 @@
-from flask import Flask, request, jsonify, render_template, send_file
+from flask import Flask, request, jsonify, render_template, send_file, session
 import sqlite3
 import os
-from export_excel import export_to_excel
 import pandas as pd
+import uuid
+import threading
+import time
 
 app = Flask(__name__)
+app.secret_key = "your_secret_key"  # 🔹 セッション管理用のキー
+SESSION_LIFETIME = 5 * 60  # 🔹 セッション有効期間（秒） 例: 5分
 
-# DB初期化 & データをクリアする関数
-def init_db():
-    conn = sqlite3.connect("database/videos.db")
-    c = conn.cursor()
-    
-    # テーブルを作成（存在しない場合）
-    c.execute('''CREATE TABLE IF NOT EXISTS videos 
-                 (id INTEGER PRIMARY KEY, url TEXT, memo TEXT, time TEXT)''')
-    
-    # 既存データを削除（リセット）
-    c.execute("DELETE FROM videos")
-    
-    conn.commit()
-    conn.close()
+# 🔹 ユーザーごとのDBを作成・リセット
+def get_db(reset=False):
+    session_id = session.get("session_id")
+    if not session_id:
+        session_id = str(uuid.uuid4())  # 🔹 ランダムなIDを作成
+        session["session_id"] = session_id
+        session["last_activity"] = time.time()  # 🔹 セッション開始時間を記録
+
+    db_path = f"tmp/sessions/{session_id}.db"
+    os.makedirs(os.path.dirname(db_path), exist_ok=True)
+
+    conn = sqlite3.connect(db_path)
+
+    # 🔹 初回またはリセット時にテーブルを作成
+    with conn:
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS videos (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                time TEXT,
+                memo TEXT,
+                url TEXT
+            )
+        """)
+        if reset:
+            conn.execute("DELETE FROM videos")  # 🔹 データをクリア
+
+    return conn, db_path
 
 @app.route("/")
 def index():
-    """サイトにアクセスしたらDBを初期化"""
-    init_db()  # 🔹 DBを初期化
+    """サイトにアクセスしたらデータをクリア（リセット）"""
+    get_db(reset=True)  # 🔹 各ユーザー専用のデータベースを作成し、初期化
     return render_template("index.html")
-
 
 @app.route("/save", methods=["POST"])
 def save_video():
@@ -34,40 +50,37 @@ def save_video():
     data = request.json
     url = data.get("url")
     memo = data.get("memo", "").replace("\n", "<br>")  # 🔹 改行を HTML `<br>` に変換
-    time = data.get("time", "")
+    time_data = data.get("time", "")
 
-    conn = sqlite3.connect("database/videos.db")
-    c = conn.cursor()
-    c.execute("INSERT INTO videos (url, memo, time) VALUES (?, ?, ?)", (url, memo, time))
-    conn.commit()
-    conn.close()
+    conn, _ = get_db()
+    with conn:
+        conn.execute("INSERT INTO videos (url, memo, time) VALUES (?, ?, ?)", (url, memo, time_data))
 
+    session["last_activity"] = time.time()  # 🔹 作業があったらセッションを更新
     return jsonify({"status": "success"})
-
-
 
 @app.route("/list", methods=["GET"])
 def list_videos():
     """保存された動画リストを取得"""
-    conn = sqlite3.connect("database/videos.db")
-    c = conn.cursor()
-    c.execute("SELECT id, url, memo, time FROM videos")
-    videos = [{"id": row[0], "url": row[1], "memo": row[2], "time": row[3]} for row in c.fetchall()]
+    conn, _ = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, url, memo, time FROM videos")
+    videos = [{"id": row[0], "url": row[1], "memo": row[2], "time": row[3]} for row in cursor.fetchall()]
     conn.close()
     
     return jsonify(videos)
 
-# Excel エクスポート API
 @app.route("/export_excel", methods=["GET"])
 def export_excel():
-    conn = sqlite3.connect("database/videos.db")
+    """Excelにエクスポート"""
+    conn, _ = get_db()
     df = pd.read_sql_query("SELECT time, memo, url FROM videos", conn)
     conn.close()
 
     # 🔹 `<br>` を `\n` に置換
     df["memo"] = df["memo"].str.replace("<br>", "\n", regex=False)
 
-    file_path = "exports/video_memo.xlsx"
+    file_path = f"tmp/sessions/{session.get('session_id')}_video_memo.xlsx"
     os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
     with pd.ExcelWriter(file_path, engine="xlsxwriter") as writer:
@@ -84,10 +97,9 @@ def export_excel():
 
     return send_file(file_path, as_attachment=True, download_name="video_memo.xlsx", mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
-
-# メモを更新する API
 @app.route("/update_memo", methods=["POST"])
 def update_memo():
+    """メモを更新"""
     data = request.json
     memo_id = data.get("id")
     new_memo = data.get("memo")
@@ -95,14 +107,55 @@ def update_memo():
     if not memo_id or new_memo is None:
         return jsonify({"status": "error", "message": "無効なデータ"})
 
-    conn = sqlite3.connect("database/videos.db")
-    c = conn.cursor()
-    c.execute("UPDATE videos SET memo = ? WHERE id = ?", (new_memo, memo_id))
-    conn.commit()
-    conn.close()
+    conn, _ = get_db()
+    with conn:
+        conn.execute("UPDATE videos SET memo = ? WHERE id = ?", (new_memo, memo_id))
 
+    session["last_activity"] = time.time()  # 🔹 作業があったらセッションを更新
     return jsonify({"status": "success"})
 
+# 🔹 ユーザーのDBを削除する関数（Webを閉じた後、5分経過で削除）
+def delete_db(session_id):
+    """ユーザーのDBとExcelファイルを削除（Webを閉じた後の一定時間後）"""
+    time.sleep(SESSION_LIFETIME)  # 🔹 一定時間（5分）待つ
+
+    db_path = f"tmp/sessions/{session_id}.db"
+    excel_path = f"tmp/sessions/{session_id}_video_memo.xlsx"
+
+    # 🔹 最終アクティビティを確認
+    last_activity = session.get("last_activity", 0)
+    if time.time() - last_activity < SESSION_LIFETIME:
+        print(f"DB削除スキップ（まだアクティブ）: {db_path}")
+        return
+
+    # 🔹 削除前にDBを明示的に閉じる
+    try:
+        conn = sqlite3.connect(db_path)
+        conn.close()
+    except Exception as e:
+        print(f"DB close error: {e}")
+
+    # 🔹 削除リトライ（最大5回）
+    for _ in range(5):
+        try:
+            if os.path.exists(db_path):
+                os.remove(db_path)
+            if os.path.exists(excel_path):
+                os.remove(excel_path)
+            print(f"Deleted {db_path} and {excel_path}")
+            break  # 成功したらループを抜ける
+        except PermissionError:
+            print(f"File in use, retrying delete: {db_path}")
+            time.sleep(1)  # 🔹 1秒待って再試行
+
+# 🔹 ユーザーがWebを閉じたときにDBを削除（セッション終了時）
+@app.after_request
+def cleanup(response):
+    session_id = session.get("session_id")
+    if session_id:
+        thread = threading.Thread(target=delete_db, args=(session_id,))
+        thread.start()
+    return response
+
 if __name__ == "__main__":
-    init_db()
     app.run(debug=True)
