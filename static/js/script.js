@@ -167,7 +167,7 @@ function exportExcel() {
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement("a");
             a.href = url;
-            a.download = "video_memo.xlsx";  // 🔹 ダウンロードファイル名
+            a.download = "適当に名前をつけて保存.xlsx";  // 🔹 ダウンロードファイル名
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
