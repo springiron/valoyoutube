@@ -115,7 +115,7 @@ def update_memo():
     return jsonify({"status": "success"})
 
 # 🔹 ユーザーのDBを削除する関数（Webを閉じた後、5分経過で削除）
-def delete_db(session_id):
+def delete_db(session_id, last_activity):
     """ユーザーのDBとExcelファイルを削除（Webを閉じた後の一定時間後）"""
     time.sleep(SESSION_LIFETIME)  # 🔹 一定時間（5分）待つ
 
@@ -123,7 +123,6 @@ def delete_db(session_id):
     excel_path = f"tmp/sessions/{session_id}_video_memo.xlsx"
 
     # 🔹 最終アクティビティを確認
-    last_activity = session.get("last_activity", 0)
     if time.time() - last_activity < SESSION_LIFETIME:
         print(f"DB削除スキップ（まだアクティブ）: {db_path}")
         return
@@ -152,8 +151,10 @@ def delete_db(session_id):
 @app.after_request
 def cleanup(response):
     session_id = session.get("session_id")
+    last_activity = session.get("last_activity", 0)  # 🔹 スレッドに渡す
+
     if session_id:
-        thread = threading.Thread(target=delete_db, args=(session_id,))
+        thread = threading.Thread(target=delete_db, args=(session_id, last_activity))
         thread.start()
     return response
 
