@@ -95,7 +95,7 @@ def export_excel():
         worksheet.set_column("B:B", 40, wrap_format)  # メモの列の幅（折り返し適用）
         worksheet.set_column("C:C", 30)  # URLの列の幅
 
-    return send_file(file_path, as_attachment=True, download_name="video_memo.xlsx", mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    return send_file(file_path, as_attachment=True, download_name="適当に名前を付けて保存してね.xlsx", mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
 @app.route("/update_memo", methods=["POST"])
 def update_memo():
