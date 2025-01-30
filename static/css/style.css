@@ -1,132 +1,284 @@
-/* 全体のスタイル */
+/* 🌎 全体のスタイル */
 body {
-    font-family: 'Arial', sans-serif;
-    background-color: #f4f4f4;
-    color: #333;
-    text-align: center;
-    margin: 0;
-    padding: 20px;
+    font-family: 'Arial', sans-serif;  /* フォントを Arial に設定 */
+    background-color: #f4f4f4;  /* 背景色を淡いグレーに設定 */
+    color: #333;  /* 文字色をダークグレーに設定 */
+    text-align: center;  /* すべてのテキストを中央揃え */
+    margin: 0;  /* ページ全体の余白をなくす */
+    padding: 20px;  /* ページ全体に余白を追加 */
 }
 
-/* メインコンテナ */
+/* 📦 メインコンテナ */
 .container {
-    max-width: 1100px;
-    background: white;
-    padding: 20px;
-    margin: 0 auto;
-    border-radius: 10px;
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    width: 95%;  /* 🔹 横幅を 95% に設定 */
+    background: white;  /* 背景色を白に設定 */
+    padding: 20px;  /* 内側の余白を追加 */
+    margin: 0 auto;  /* 中央揃え */
+    border-radius: 10px;  /* 角を丸くする */
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);  /* やや強めの影を追加 */
 }
 
-/* 横並びレイアウト */
+/* 🎥 横並びレイアウト */
 .main-content {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 20px;
-    margin-top: 20px;
+    display: flex;  /* フレックスボックスを使用 */
+    justify-content: space-between;  /* 両端に配置 */
+    align-items: flex-start;  /* 上揃え */
+    gap: 20px;  /* 要素間の間隔を 20px に設定 */
+    margin-top: 20px;  /* 上の余白を追加 */
 }
 
-/* 左側（動画エリア） */
+/* 🎞️ 左側（動画エリア） */
 .video-container {
-    width: 60%;
+    width: 60%;  /* 画面の 60% を占める */
     display: flex;
     flex-direction: column;
     align-items: center;
 }
 
+/* YouTube 埋め込みプレイヤー */
 #player {
-    width: 100%;
-    max-width: 800px;
-    height: 500px;
-    background: black;
+    width: 100%;  /* 幅いっぱいに広げる */
+    max-width: 1000px;  /* 最大幅を 800px に設定 */
+    height: 500px;  /* 高さを 500px に設定 */
+    background: black;  /* 背景を黒にする */
 }
 
-/* 右側（メモエリア） */
+/* ✏️ 右側（メモエリア） */
 .memo-container {
-    width: 35%;
-    background: #f9f9f9;
-    padding: 15px;
-    border-radius: 10px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    width: 50%;  /* メモエリアを 50% に設定 */
+    background: #f9f9f9;  /* 背景色を淡いグレーに設定 */
+    padding: 15px;  /* 内側の余白を追加 */
+    border-radius: 30px;  /* 角を丸くする */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);  /* やや控えめな影を追加 */
 }
 
-/* テーブルのデザイン */
+/* 📊 テーブルのデザイン */
 table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
+    width: 100%;  /* 幅いっぱいに広げる */
+    border-collapse: collapse;  /* 枠線を一本化 */
+    margin-top: 10px;  /* 上の余白を追加 */
+    margin-bottom: 30px;  /* 下の余白を追加 */
 }
 
 th, td {
-    border: 1px solid #ccc;
-    padding: 8px;
-    text-align: center;
+    border: 1px solid #ccc;  /* 枠線をグレーに設定 */
+    padding: 8px;  /* セルの内側の余白を追加 */
+    text-align: left;  /* テキストを左揃え */
 }
 
+/* テーブルのヘッダー */
 th {
-    background-color: #007BFF;
-    color: white;
+    background-color: #ffa33a;  /* オレンジの背景色 */
+    color: white;  /* 白文字 */
 }
 
-/* Excelエクスポートボタン */
+/* 📝 メモの入力フォーム（改行対応） */
+.memo-container textarea {
+    width: 90%;  /* 横幅を 90% に設定 */
+    font-size: 16px;  /* 文字サイズを大きくする */
+    height: 80px;  /* 高さを確保 */
+    margin-bottom: 30px;  /* 下の余白を追加 */
+    border: 1px solid #ccc;  /* 枠線をグレーに設定 */
+    border-radius: 5px;  /* 角を丸くする */
+    resize: vertical;  /* ユーザーが縦方向のサイズ変更を可能にする */
+}
+
+/* 📂 Excelエクスポートボタン */
 .export-btn {
-    display: block;
-    width: 90%;
-    margin: 20px auto;
-    background-color: #28a745;
+    display: flex;  /* 🔹 フレックスボックスを使用し、内部のアイコンとテキストを横並び */
+    justify-content: space-evenly;  /* 🔹 内部のアイコンとテキストの間隔を均等に */
+    align-items: center;  /* 🔹 縦方向中央揃え */
+    text-align: center;  /* 🔹 テキストを中央揃え */
+    text-decoration: none;  /* 🔹 下線を削除 */
+    
+    margin: auto;  /* 🔹 中央揃え */
+    
+    padding: 0.5rem 4rem 0.5rem 3rem;  /* 🔹 上下1rem・右4rem・左3remの余白を設定 */
+   
+    background: #33c455;  /* 🔹 背景色を水色 */
+    color: #000000;  /* 🔹 文字色を白 */
+    border-radius: 100vh;  /* 🔹 角を丸く（pill shape） */
+    
+    position: relative;  /* 🔹 擬似要素の配置に使用 */
+    transition: 0.5s;  /* 🔹 ホバー時の色変更をスムーズに */
+    margin-bottom: 30px;  /* 下の余白を追加 */
 }
 
+/* ✨ ボタンのホバー時 */
 .export-btn:hover {
-    background-color: #218838;
+    background: #44fd6f;  /* 🔹 ホバー時に背景を明るい水色に */
+    color: #fff;  /* 🔹 文字色はそのまま白 */
 }
-/* メモの入力フォーム */
-.memo-container input {
-    width: 90%;
-    padding: 10px;
+
+
+
+/* 🔗 YouTube URL入力フィールドのデザイン */
+.input-group {
+    display: flex;  /* フレックスボックスを使用 */
+    justify-content: center;  /* 中央揃え */
+    align-items: center;
+    gap: 10px;  /* 間隔を開ける */
+    margin: 10px 0;  /* 上下に余白を追加 */
+}
+
+/* 🎯 入力フィールドのスタイル */
+#videoUrlInput {
+    width: 90%;  /* 横幅を 90% に設定 */
+    max-width: 600px;  /* 最大幅を 600px に制限 */
+    padding: 12px;  /* 内側の余白を設定 */
+    font-size: 16px;  /* 文字サイズを大きく */
+    border: 2px solid #ccc;  /* 枠線をグレーに設定 */
+    border-radius: 8px;  /* 角を丸くする */
+    outline: none;  /* フォーカス時の青い枠をなくす */
+    transition: all 0.3s ease-in-out;  /* スムーズな変化 */
+}
+
+/* ✨ フォーカス時のエフェクト */
+#videoUrlInput:focus {
+    border-color: #007BFF;  /* フォーカス時に青色に変更 */
+    box-shadow: 0 0 8px rgba(0, 123, 255, 0.3);  /* 薄い青い影を追加 */
+}
+
+/* 💾 保存ボタン */
+.save-btn {
+    display: flex;  /* 🔹 フレックスボックスを使用し、内部のアイコンとテキストを横並び */
+    justify-content: space-evenly;  /* 🔹 内部のアイコンとテキストの間隔を均等に */
+    align-items: center;  /* 🔹 縦方向中央揃え */
+    text-align: center;  /* 🔹 テキストを中央揃え */
+    text-decoration: none;  /* 🔹 下線を削除 */
+    
+    margin: auto;  /* 🔹 中央揃え */
+    
+    padding: 0.5rem 4rem 0.5rem 3rem;  /* 🔹 上下1rem・右4rem・左3remの余白を設定 */
+   
+    background: #27acd9;  /* 🔹 背景色を水色 */
+    color: #fff;  /* 🔹 文字色を白 */
+    border-radius: 100vh;  /* 🔹 角を丸く（pill shape） */
+    
+    position: relative;  /* 🔹 擬似要素の配置に使用 */
+    transition: 0.5s;  /* 🔹 ホバー時の色変更をスムーズに */
+    margin-bottom: 30px;  /* 下の余白を追加 */
+}
+
+/* ✨ ボタンのホバー時 */
+.save-btn:hover {
+    background: #44c6f2;  /* 🔹 ホバー時に背景を明るい水色に */
+    color: #fff;  /* 🔹 文字色はそのまま白 */
+}
+
+
+
+
+/* 🔘 ボタンのスタイル */
+.input-group button {
+    width: 100%;  /* 幅を広げる */
+    padding: 12px 20px;
     font-size: 16px;
-    margin-bottom: 10px;
-    border: 1px solid #ccc;
+    color: white;
+    background-color: #007BFF;  /* 青色のボタン */
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+}
+
+/* ボタンのホバー時 */
+.input-group button:hover {
+    background-color: #0056b3;
+}
+
+/* ✏️ メモのテキスト（初期表示） */
+.memo-text {
+    white-space: pre-line;  /* 🔹 改行を適切に表示 */
+    padding: 5px;
+    font-size: 16px;
+    border: none;
+    background: transparent;
+    outline: none;
+    cursor: default;
+}
+
+/* 📝 メモ入力欄（textarea） */
+.memo-input {
+    width: 100%;  /* 🔹 親要素の幅いっぱいに広げる */
+    padding: 5px;  /* 🔹 テキストと枠の間の余白を確保 */
+    font-size: 16px;  /* 🔹 テキストを見やすいサイズに調整 */
+    border: 1px solid #ccc;  /* 🔹 入力フィールドの枠線をグレーに */
+    background: white;  /* 🔹 背景色を白に設定 */
+    outline: none;  /* 🔹 フォーカス時の青い枠線を非表示 */
+    resize: vertical;  /* 🔹 ユーザーが縦方向にサイズ変更できるように */
+}
+
+/* 🔘 ボタンのデザイン */
+.memo-action-btn {
+    padding: 6px 10px;
+    font-size: 14px;
+    border: none;
+    cursor: pointer;
     border-radius: 5px;
+    transition: 0.3s;
 }
 
-/* テーブルのデザイン */
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
-}
-
-th, td {
-    border: 1px solid #ccc;
-    padding: 8px;
-    text-align: center;
-}
-
-th {
-    background-color: #007BFF;
+/* 📝 編集ボタン */
+.edit-btn {
+    background-color: #f0ad4e;
     color: white;
 }
 
-/* Excelエクスポートボタン */
-.export-btn {
-    display: block;
-    width: 90%;
-    margin: 20px auto;
-    background-color: #28a745;
+.edit-btn:hover {
+    background-color: #ec971f;
 }
 
-.export-btn:hover {
-    background-color: #218838;
+/* 📋 テーブル全体のスタイル */
+.table-container {
+    width: 100%;  /* 🔹 親要素の幅いっぱいに広げる */
+    overflow-x: auto;  /* 🔹 横スクロールを許可（狭い画面でも見やすく） */
+    max-width: 100%;  /* 🔹 画面をはみ出さないようにする */
 }
 
-/* レスポンシブ対応 */
+/* 📊 テーブルのデザイン */
+table {
+    width: 100%;  /* 🔹 コンテナ内でフルサイズ表示 */
+    border-collapse: collapse;  /* 🔹 枠線を重ねてスッキリしたデザインに */
+    table-layout: fixed;  /* 🔹 列の幅を固定（均等に揃う） */
+}
+
+/* 📌 各セルのスタイル */
+th, td {
+    border: 1px solid #ccc;  /* 🔹 セルの枠線をグレーに */
+    padding: 8px;  /* 🔹 セル内のテキストに適切な余白を確保 */
+    text-align: left;  /* 🔹 テキストを左揃えに */
+    word-wrap: break-word;  /* 🔹 長い単語で折り返す */
+    overflow: hidden;  /* 🔹 はみ出しを防ぐ */
+}
+
+/* 🟠 ヘッダーのデザイン */
+th {
+    background-color: #ffa33a;  /* 🔹 オレンジの背景 */
+    color: white;  /* 🔹 テキストを白に */
+}
+
+
+/* 🔹 「操作」カラムの幅を狭くする */
+th:nth-child(1), td:nth-child(1) {
+    width: 80px;  /* 🔹 操作カラムの幅を固定（狭く） */
+    text-align: center;  /* 🔹 ボタンを中央配置 */
+}
+
+
+/* 🔹 「操作」カラムの幅を狭くする */
+th:nth-child(3), td:nth-child(3) {
+    width: 80px;  /* 🔹 操作カラムの幅を固定（狭く） */
+    text-align: center;  /* 🔹 ボタンを中央配置 */
+}
+
+/* 📱 レスポンシブ対応（画面幅が 900px 以下の時） */
 @media screen and (max-width: 900px) {
     .main-content {
-        flex-direction: column;
+        flex-direction: column;  /* 縦並びに変更 */
         align-items: center;
     }
     .video-container, .memo-container {
-        width: 100%;
+        width: 100%;  /* 幅を 100% に広げる */
     }
 }

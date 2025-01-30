@@ -8,125 +8,43 @@
 </head>
 <body>
     <div class="container">
-        <h1>YouTube メモアプリ</h1>
-
+        <h1>Youtube 試合動画メモアプリ</h1>
         <div class="main-content">
             <!-- 左側: YouTube プレイヤー -->
             <div class="video-container">
-                <input type="text" id="videoUrlInput" placeholder="YouTubeのURLを入力">
-                <button onclick="loadVideo()">動画を読み込む</button>
+                <div class="input-group">
+                    <input type="text" id="videoUrlInput" placeholder="YouTubeのURLを入力">
+                    <button onclick="loadVideo()">🎥 動画を読み込み</button>
+                </div>
                 <div id="player"></div>
             </div>
 
             <!-- 右側: メモリスト -->
             <div class="memo-container">
-                <h2>保存済みの動画</h2>
-                <input type="text" id="memoInput" placeholder="メモを入力">
-                <button onclick="saveCurrentTime()">停止時のURLを保存</button>
+                <h2>動画停止してメモ</h2>
+                <textarea id="memoInput" placeholder="メモを入力（改行OK）"></textarea>
+                <button class="save-btn" onclick="saveCurrentTime()">メモを入力したらクリックして追加</button>
 
-                <table id="videoTable">
-                    <thead>
-                        <tr>
-                            <th>秒数</th>
-                            <th>メモ</th>
-                            <th>リンク</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-
-                <button class="export-btn" onclick="exportExcel()">Excelにエクスポート</button>
+                <div class="table-container">
+                    <table id="videoTable">
+                        <thead>
+                            <tr>
+                                <th>リンク</th>
+                                <th>メモ</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <button class="export-btn" onclick="exportExcel()">📂 Excelにエクスポート</button>
             </div>
         </div>
     </div>
 
-    <script>
-        let player;
-        let currentVideoId = "";
-
-        function loadVideo() {
-            const urlInput = document.getElementById("videoUrlInput").value.trim();
-            const videoId = extractVideoId(urlInput);
-
-            if (!videoId) {
-                alert("正しいYouTubeのURLを入力してください");
-                return;
-            }
-
-            currentVideoId = videoId;
-
-            if (player) {
-                player.loadVideoById(videoId);
-            } else {
-                player = new YT.Player('player', {
-                    height: '500',
-                    width: '800',
-                    videoId: videoId,
-                });
-            }
-        }
-
-        function saveCurrentTime() {
-            if (!currentVideoId) {
-                alert("動画を先に読み込んでください");
-                return;
-            }
-
-            const time = player ? Math.floor(player.getCurrentTime()) : 0;
-            const formattedTime = formatTime(time);
-            const videoUrl = `https://www.youtube.com/watch?v=${currentVideoId}&t=${time}s`;
-            const memo = document.getElementById("memoInput").value.trim() || "なし";
-
-            fetch("/save", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ url: videoUrl, memo: memo, time: formattedTime })
-            }).then(() => {
-                document.getElementById("memoInput").value = "";
-                loadVideos();
-            });
-        }
-
-        function loadVideos() {
-            fetch("/list")
-                .then(res => res.json())
-                .then(videos => {
-                    const tableBody = document.querySelector("#videoTable tbody");
-                    tableBody.innerHTML = "";
-                    videos.forEach(video => {
-                        const row = document.createElement("tr");
-                        row.innerHTML = `
-                            <td>${video.time}</td>
-                            <td>${video.memo}</td>
-                            <td><a href="${video.url}" target="_blank">開く</a></td>
-                        `;
-                        tableBody.appendChild(row);
-                    });
-                });
-        }
-
-        function extractVideoId(url) {
-            const regex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
-            const match = url.match(regex);
-            return match ? match[1] : null;
-        }
-
-        function formatTime(seconds) {
-            const minutes = Math.floor(seconds / 60);
-            const remainingSeconds = seconds % 60;
-            return `${minutes}分${remainingSeconds}秒`;
-        }
-        
-        function exportExcel() {
-        console.log("Excelエクスポートボタンが押されました");  // デバッグ用ログ
-        window.location.href = "/export_excel";
-        }        
-        
-        const tag = document.createElement('script');
-        tag.src = "https://www.youtube.com/iframe_api";
-        document.head.appendChild(tag);
-
-        window.onload = loadVideos;
-    </script>
+    <!-- YouTube API 読み込み -->
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <!-- JavaScriptファイルを読み込み -->
+    <script src="/static/js/script.js"></script>
 </body>
 </html>
