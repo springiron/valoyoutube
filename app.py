@@ -8,7 +8,7 @@ import time
 
 app = Flask(__name__)
 app.secret_key = "your_secret_key"  # 🔹 セッション管理用のキー
-SESSION_LIFETIME = 5 * 60  # 🔹 セッション有効期間（秒） 例: 5分
+SESSION_LIFETIME = 24 * 60  # 🔹 セッション有効期間（秒） 例: 5分
 
 # 🔹 ユーザーごとのDBを作成・リセット
 def get_db(reset=False):

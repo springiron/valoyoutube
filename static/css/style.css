@@ -273,6 +273,21 @@ th:nth-child(3), td:nth-child(3) {
     text-align: center;  /* 🔹 ボタンを中央配置 */
 }
 
+/* 📦 メインコンテナ */
+.sub-container {
+    display: flex;  /* フレックスボックスを使用 */
+    background: #f4f4f4;  /* 背景色を白に設定 */
+    padding: 20px;  /* 内側の余白を追加 */
+    text-align: left; /* 左揃え */
+    border-radius: 10px;  /* 角を丸くする */
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);  /* やや強めの影を追加 */
+    flex-direction: column;  /* 縦並びに配置 */
+    margin-top: 1px;  /* 上の余白を追加 */
+}
+.sub-container p {
+    margin-bottom: 10px; /* 下の余白を10pxに設定 */
+}
+
 /* 📱 レスポンシブ対応（画面幅が 900px 以下の時） */
 @media screen and (max-width: 900px) {
     .main-content {
