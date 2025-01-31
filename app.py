@@ -39,11 +39,8 @@ def get_db(reset=False):
                 url TEXT
             )
         """)
-        print("DB Connected")
-        print(pd.read_sql_query("SELECT id, memo, url FROM videos", conn))
         if reset:
             conn.execute("DELETE FROM videos")  # 🔹 データをクリア
-            print("DB Reset")
 
     return conn, db_path
 
