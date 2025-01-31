@@ -9,15 +9,21 @@ import time
 app = Flask(__name__)
 app.secret_key = "your_secret_key"  # 🔹 セッション管理用のキー
 SESSION_LIFETIME = 24 * 60  # 🔹 セッション有効期間（秒） 例: 5分
+SESSIONS_DIR = "tmp/sessions"  # 🔹 セッションDBが保存されるディレクトリ
 
 # 🔹 ユーザーごとのDBを作成・リセット
 def get_db(reset=False):
+    
     session_id = session.get("session_id")
+    print(f"Session ID: {session_id}")
+    
     if not session_id:
         session_id = str(uuid.uuid4())  # 🔹 ランダムなIDを作成
         session["session_id"] = session_id
         session["last_activity"] = time.time()  # 🔹 セッション開始時間を記録
+        print("session df", session)
 
+    
     db_path = f"tmp/sessions/{session_id}.db"
     os.makedirs(os.path.dirname(db_path), exist_ok=True)
 
@@ -33,14 +39,18 @@ def get_db(reset=False):
                 url TEXT
             )
         """)
+        print("DB Connected")
+        print(pd.read_sql_query("SELECT id, memo, url FROM videos", conn))
         if reset:
             conn.execute("DELETE FROM videos")  # 🔹 データをクリア
+            print("DB Reset")
 
     return conn, db_path
 
 @app.route("/")
 def index():
     """サイトにアクセスしたらデータをクリア（リセット）"""
+    session.pop("session_id", None)  # 🔹 リロード時にセッションをリセット
     get_db(reset=True)  # 🔹 各ユーザー専用のデータベースを作成し、初期化
     return render_template("index.html")
 
@@ -114,49 +124,49 @@ def update_memo():
     session["last_activity"] = time.time()  # 🔹 作業があったらセッションを更新
     return jsonify({"status": "success"})
 
-# 🔹 ユーザーのDBを削除する関数（Webを閉じた後、5分経過で削除）
-def delete_db(session_id, last_activity):
-    """ユーザーのDBとExcelファイルを削除（Webを閉じた後の一定時間後）"""
-    time.sleep(SESSION_LIFETIME)  # 🔹 一定時間（5分）待つ
 
-    db_path = f"tmp/sessions/{session_id}.db"
-    excel_path = f"tmp/sessions/{session_id}_video_memo.xlsx"
+# 🔹 Webを閉じたときに `tmp/sessions/` 内の全DBを削除
+def delete_all_dbs():
+    """ `tmp/sessions/` フォルダ内のすべてのDBとExcelファイルを削除 """
+    time.sleep(5)  # 🔹 一定時間（5分）待つ
 
-    # 🔹 最終アクティビティを確認
-    if time.time() - last_activity < SESSION_LIFETIME:
-        print(f"DB削除スキップ（まだアクティブ）: {db_path}")
+    if not os.path.exists(SESSIONS_DIR):
         return
 
-    # 🔹 削除前にDBを明示的に閉じる
-    try:
-        conn = sqlite3.connect(db_path)
-        conn.close()
-    except Exception as e:
-        print(f"DB close error: {e}")
+    for filename in os.listdir(SESSIONS_DIR):
+        file_path = os.path.join(SESSIONS_DIR, filename)
 
-    # 🔹 削除リトライ（最大5回）
-    for _ in range(5):
-        try:
-            if os.path.exists(db_path):
-                os.remove(db_path)
-            if os.path.exists(excel_path):
-                os.remove(excel_path)
-            print(f"Deleted {db_path} and {excel_path}")
-            break  # 成功したらループを抜ける
-        except PermissionError:
-            print(f"File in use, retrying delete: {db_path}")
-            time.sleep(1)  # 🔹 1秒待って再試行
+        if file_path.endswith(".db") or file_path.endswith(".xlsx"):  # 🔹 DBとExcelファイルを削除
+            for _ in range(3):  # 🔹 最大10回リトライ
+                try:
+                    # 🔹 まず、DBを開いている可能性があるので接続を閉じる
+                    try:
+                        conn = sqlite3.connect(file_path)
+                        conn.close()
+                    except sqlite3.Error:
+                        pass  # 🔹 DBが開けなかった場合はスキップ
 
-# 🔹 ユーザーがWebを閉じたときにDBを削除（セッション終了時）
-@app.after_request
-def cleanup(response):
-    session_id = session.get("session_id")
-    last_activity = session.get("last_activity", 0)  # 🔹 スレッドに渡す
+                    os.remove(file_path)
+                    print(f"Deleted: {file_path}")
+                    break  # 🔹 成功したらループを抜ける
 
-    if session_id:
-        thread = threading.Thread(target=delete_db, args=(session_id, last_activity))
-        thread.start()
-    return response
+                except PermissionError:
+                    print(f"File in use, retrying delete: {file_path}")
+                    time.sleep(2)  # 🔹 2秒待って再試行
+
+    print("All session databases deleted.")
+
+
+@app.route("/close_session", methods=["POST"])
+def close_session():
+    """ ユーザーがページを閉じたときに呼び出される """
+    print("セッション終了")
+
+    # 🔹 バックグラウンドで `delete_all_dbs()` を実行
+    thread = threading.Thread(target=delete_all_dbs)
+    thread.start()
+
+    return "", 204  # 🔹 レスポンスなし（204 No Content）
 
 if __name__ == "__main__":
     app.run(debug=True)

@@ -205,3 +205,7 @@ document.addEventListener("DOMContentLoaded", () => {
     loadVideos();
 });
 
+
+window.addEventListener("beforeunload", function () {
+    navigator.sendBeacon("/close_session");  // 🔹 Flask に「ページを閉じた」ことを通知
+});
