@@ -121,20 +121,16 @@ def update_memo():
     session["last_activity"] = time.time()  # 🔹 作業があったらセッションを更新
     return jsonify({"status": "success"})
 
+def delete_user_db(session_id):
+    """ `tmp/sessions/` 内の特定のセッションのDBとExcelファイルを削除 """
+    time.sleep(30)  # 🔹 一定時間（5分）待つ
 
-# 🔹 Webを閉じたときに `tmp/sessions/` 内の全DBを削除
-def delete_all_dbs():
-    """ `tmp/sessions/` フォルダ内のすべてのDBとExcelファイルを削除 """
-    time.sleep(5)  # 🔹 一定時間（5分）待つ
+    db_path = os.path.join(SESSIONS_DIR, f"{session_id}.db")
+    excel_path = os.path.join(SESSIONS_DIR, f"{session_id}_video_memo.xlsx")
 
-    if not os.path.exists(SESSIONS_DIR):
-        return
-
-    for filename in os.listdir(SESSIONS_DIR):
-        file_path = os.path.join(SESSIONS_DIR, filename)
-
-        if file_path.endswith(".db") or file_path.endswith(".xlsx"):  # 🔹 DBとExcelファイルを削除
-            for _ in range(3):  # 🔹 最大10回リトライ
+    for file_path in [db_path, excel_path]:
+        if os.path.exists(file_path):
+            for _ in range(3):  # 🔹 最大3回リトライ
                 try:
                     # 🔹 まず、DBを開いている可能性があるので接続を閉じる
                     try:
@@ -151,16 +147,17 @@ def delete_all_dbs():
                     print(f"File in use, retrying delete: {file_path}")
                     time.sleep(2)  # 🔹 2秒待って再試行
 
-    print("All session databases deleted.")
+    print(f"Session {session_id} database deleted.")
+
 
 
 @app.route("/close_session", methods=["POST"])
 def close_session():
     """ ユーザーがページを閉じたときに呼び出される """
     print("セッション終了")
-
+    session_id = session.get("session_id")
     # 🔹 バックグラウンドで `delete_all_dbs()` を実行
-    thread = threading.Thread(target=delete_all_dbs)
+    thread = threading.Thread(target=delete_user_db,args=(session_id,))
     thread.start()
 
     return "", 204  # 🔹 レスポンスなし（204 No Content）
